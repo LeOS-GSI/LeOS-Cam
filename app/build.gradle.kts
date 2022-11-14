@@ -11,17 +11,15 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "org.lineageos.aperture.dev"
-        minSdk = 31
+        applicationId = "com.leos.camera"
+        minSdk = 26
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
-        named("release") {
+        getByName("release") {
             // Enables code shrinking, obfuscation, and optimization.
             isMinifyEnabled = true
 
@@ -35,6 +33,10 @@ android {
                     "proguard-rules.pro"
                 )
             )
+        }
+        getByName("debug") {
+            // Append .dev to package name so we won't conflict with AOSP build.
+            applicationIdSuffix = ".dev"
         }
     }
 
@@ -54,10 +56,10 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
     implementation("androidx.preference:preference:1.2.0")
-    implementation("com.google.android.material:material:1.8.0-alpha01")
+    implementation("com.google.android.material:material:1.8.0-alpha02")
 
     // CameraX core library using the camera2 implementation
-    val cameraxVersion = "1.2.0-beta02"
+    val cameraxVersion = "1.2.0-rc02"
     // The following line is optional, as the core library is included indirectly by camera-camera2
     implementation("androidx.camera:camera-core:${cameraxVersion}")
     implementation("androidx.camera:camera-camera2:${cameraxVersion}")
@@ -186,8 +188,8 @@ tasks.register("generateBp") {
 
         // Parse dependencies
         val dependencies =
-            it.file.parentFile.parentFile.walk().first { file -> file.extension == "pom" }
-                .let { file ->
+            it.file.parentFile.parentFile.walk().filter { file -> file.extension == "pom" }
+                .map { file ->
                     val ret = mutableListOf<String>()
 
                     val pom = XmlParser().parse(file)
@@ -205,9 +207,9 @@ tasks.register("generateBp") {
                     }
 
                     ret
-                }
+                }.flatten()
 
-        var targetSdkVersion = android.defaultConfig.minSdk
+        var targetSdkVersion = android.defaultConfig.targetSdk
         var minSdkVersion = 14
 
         // Extract AndroidManifest.xml for AARs

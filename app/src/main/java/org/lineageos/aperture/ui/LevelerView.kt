@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2022 The LineageOS Project
- *
+ * SPDX-FileCopyrightText: 2022 The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -20,10 +19,11 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.runCatching
 
 class LevelerView(context: Context, attributeSet: AttributeSet?) : View(context, attributeSet) {
     private var currentOrientation = ORIENTATION_UNKNOWN
-    private val orientationEventListener =
+    private val orientationEventListener = runCatching {
         object : OrientationEventListener(context, SensorManager.SENSOR_DELAY_UI) {
             override fun onOrientationChanged(orientation: Int) {
                 if (orientation == ORIENTATION_UNKNOWN) {
@@ -34,6 +34,7 @@ class LevelerView(context: Context, attributeSet: AttributeSet?) : View(context,
                 postInvalidate()
             }
         }
+    }.getOrNull()
 
     private val defaultLevelPaint = Paint().apply {
         isAntiAlias = true
@@ -60,9 +61,9 @@ class LevelerView(context: Context, attributeSet: AttributeSet?) : View(context,
         super.setVisibility(visibility)
 
         if (visibility == VISIBLE) {
-            orientationEventListener.enable()
+            orientationEventListener?.enable()
         } else {
-            orientationEventListener.disable()
+            orientationEventListener?.disable()
         }
     }
 
