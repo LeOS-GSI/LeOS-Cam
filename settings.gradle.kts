@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Aperture"
+rootProject.name = "LeOS-Cam"
 include(":app")

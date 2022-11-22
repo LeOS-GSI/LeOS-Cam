@@ -15,7 +15,7 @@ android {
         minSdk = 26
         targetSdk = 33
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.1"
     }
 
     buildTypes {
@@ -36,7 +36,7 @@ android {
         }
         getByName("debug") {
             // Append .dev to package name so we won't conflict with AOSP build.
-            applicationIdSuffix = ".dev"
+            applicationIdSuffix = ".161"
         }
     }
 
