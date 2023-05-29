@@ -11,11 +11,11 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "org.lineageos.aperture"
+        applicationId = "org.leos.aperture"
         minSdk = 26
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.6.1"
     }
 
     buildTypes {
