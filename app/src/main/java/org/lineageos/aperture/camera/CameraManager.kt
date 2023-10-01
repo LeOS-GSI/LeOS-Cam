@@ -26,7 +26,7 @@ class CameraManager(context: Context) {
     val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     private val additionalVideoConfigurations by lazy {
-        mutableMapOf<String, MutableMap<Quality, MutableList<Framerate>>>().apply {
+        mutableMapOf<String, MutableMap<Quality, MutableSet<FrameRate>>>().apply {
             context.resources.getStringArray(context, R.array.config_additionalVideoConfigurations)
                 .let {
                     if (it.size % 3 != 0) {
@@ -36,26 +36,26 @@ class CameraManager(context: Context) {
 
                     for (i in it.indices step 3) {
                         val cameraId = it[i]
-                        val framerates = it[i + 2].split("|").mapNotNull {
-                            Framerate.fromValue(it.toInt())
+                        val frameRates = it[i + 2].split("|").mapNotNull { frameRate ->
+                            FrameRate.fromValue(frameRate.toInt())
                         }
 
-                        it[i + 1].split("|").mapNotNull {
-                            when (it) {
+                        it[i + 1].split("|").mapNotNull { quality ->
+                            when (quality) {
                                 "sd" -> Quality.SD
                                 "hd" -> Quality.HD
                                 "fhd" -> Quality.FHD
                                 "uhd" -> Quality.UHD
                                 else -> null
                             }
-                        }.distinct().forEach {
+                        }.distinct().forEach { quality ->
                             if (!this.containsKey(cameraId)) {
                                 this[cameraId] = mutableMapOf()
                             }
-                            if (!this[cameraId]!!.containsKey(it)) {
-                                this[cameraId]!![it] = mutableListOf()
+                            if (!this[cameraId]!!.containsKey(quality)) {
+                                this[cameraId]!![quality] = mutableSetOf()
                             }
-                            this[cameraId]!![it]!!.addAll(framerates)
+                            this[cameraId]!![quality]!!.addAll(frameRates)
                         }
                     }
                 }
@@ -97,14 +97,20 @@ class CameraManager(context: Context) {
             a.key to a.value.toMap()
         }.toMap()
     }
+    val enableHighResolution by lazy {
+        context.resources.getBoolean(context, R.bool.config_enableHighResolution)
+    }
 
-    private val cameras: Map<String, Camera>
-        get() = cameraProvider.availableCameraInfos.associate {
-            val camera = Camera(it, this)
-            camera.cameraId to camera
-        }
+    private val cameras: List<Camera>
+        get() = cameraProvider.availableCameraInfos.map {
+            Camera(it, this)
+        }.sortedBy { it.cameraId }
 
     // We expect device cameras to never change
+    private val internalCameras = cameras.filter {
+        it.cameraType == CameraType.INTERNAL && !ignoredAuxCameraIds.contains(it.cameraId)
+    }
+
     private val backCameras = prepareDeviceCamerasList(CameraFacing.BACK)
     private val mainBackCamera = backCameras.firstOrNull()
     private val backCamerasSupportingVideoRecording = backCameras.filter {
@@ -117,12 +123,9 @@ class CameraManager(context: Context) {
         it.supportsVideoRecording
     }
 
-    val internalCamerasSupportingVideoRecoding =
-        backCamerasSupportingVideoRecording + frontCamerasSupportingVideoRecording
-
     private val externalCameras: List<Camera>
-        get() = cameras.values.filter {
-            it.cameraFacing == CameraFacing.EXTERNAL
+        get() = cameras.filter {
+            it.cameraType == CameraType.EXTERNAL
         }
     private val externalCamerasSupportingVideoRecording: List<Camera>
         get() = externalCameras.filter { it.supportsVideoRecording }
@@ -142,8 +145,8 @@ class CameraManager(context: Context) {
     private val availableCamerasSupportingVideoRecording: List<Camera>
         get() = availableCameras.filter { it.supportsVideoRecording }
 
-    fun getAdditionalVideoFramerates(cameraId: String, quality: Quality) =
-        additionalVideoConfigurations[cameraId]?.get(quality) ?: listOf()
+    fun getAdditionalVideoFrameRates(cameraId: String, quality: Quality) =
+        additionalVideoConfigurations[cameraId]?.get(quality) ?: setOf()
 
     fun getLogicalZoomRatios(cameraId: String) = mutableMapOf(1.0f to 1.0f).apply {
         logicalZoomRatios[cameraId]?.let {
@@ -161,6 +164,7 @@ class CameraManager(context: Context) {
                 CameraFacing.EXTERNAL -> externalCamerasSupportingVideoRecording
                 else -> throw Exception("Unknown facing")
             }
+
             else -> when (cameraFacing) {
                 CameraFacing.BACK -> backCameras
                 CameraFacing.FRONT -> frontCameras
@@ -215,13 +219,15 @@ class CameraManager(context: Context) {
         }
     }
 
+    fun videoRecordingAvailable() = availableCamerasSupportingVideoRecording.isNotEmpty()
+
     fun shutdown() {
         cameraExecutor.shutdown()
     }
 
     private fun prepareDeviceCamerasList(cameraFacing: CameraFacing): List<Camera> {
-        val facingCameras = cameras.values.filter {
-            it.cameraFacing == cameraFacing && !ignoredAuxCameraIds.contains(it.cameraId)
+        val facingCameras = internalCameras.filter {
+            it.cameraFacing == cameraFacing
         }
 
         if (facingCameras.isEmpty()) {

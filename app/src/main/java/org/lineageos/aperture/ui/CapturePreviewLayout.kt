@@ -13,10 +13,13 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import androidx.lifecycle.Observer
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import org.lineageos.aperture.R
+import org.lineageos.aperture.camera.CameraViewModel
 import org.lineageos.aperture.ext.*
 import org.lineageos.aperture.utils.ExifUtils
 import org.lineageos.aperture.utils.MediaType
@@ -40,17 +43,29 @@ class CapturePreviewLayout(context: Context, attrs: AttributeSet?) : ConstraintL
     private val imageView by lazy { findViewById<ImageView>(R.id.imageView) }
     private val videoView by lazy { findViewById<PlayerView>(R.id.videoView) }
 
+    private val screenRotationObserver = Observer { screenRotation: Rotation ->
+        updateViewsRotation(screenRotation)
+    }
+
     /**
      * input is null == canceled
      * input is not null == confirmed
      */
     internal var onChoiceCallback: (input: Any?) -> Unit = {}
 
-    internal var screenRotation = Rotation.ROTATION_0
+    internal var cameraViewModel: CameraViewModel? = null
         set(value) {
+            // Unregister
+            field?.screenRotation?.removeObserver(screenRotationObserver)
+
             field = value
-            updateViewsRotation()
+
+            val lifecycleOwner = findViewTreeLifecycleOwner() ?: return
+
+            value?.screenRotation?.observe(lifecycleOwner, screenRotationObserver)
         }
+    private val screenRotation
+        get() = cameraViewModel?.screenRotation?.value ?: Rotation.ROTATION_0
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
@@ -107,6 +122,7 @@ class CapturePreviewLayout(context: Context, attrs: AttributeSet?) : ConstraintL
                     imageView.setImageBitmap(bitmap)
                 }
             }
+
             MediaType.VIDEO -> {
                 exoPlayer = ExoPlayer.Builder(context)
                     .build()
@@ -133,7 +149,7 @@ class CapturePreviewLayout(context: Context, attrs: AttributeSet?) : ConstraintL
         }
     }
 
-    private fun updateViewsRotation() {
+    private fun updateViewsRotation(screenRotation: Rotation) {
         val compensationValue = screenRotation.compensationValue.toFloat()
 
         cancelButton.smoothRotate(compensationValue)

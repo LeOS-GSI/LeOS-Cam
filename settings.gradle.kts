@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022-2023 The LineageOS Project
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -8,7 +13,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven("https://raw.githubusercontent.com/luk1337/camerax_selfie/8fce720404a9b396a6f38a0be598a3e63002b2f2/.m2")
+        maven("https://raw.githubusercontent.com/lineage-next/camerax-aperture/54901603849cb157716f4ff65bb85ab0538c30e7/.m2")
         google()
         mavenCentral()
     }

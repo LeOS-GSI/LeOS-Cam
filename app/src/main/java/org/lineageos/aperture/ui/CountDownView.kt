@@ -12,12 +12,16 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.annotation.IntRange
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.lifecycle.Observer
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import org.lineageos.aperture.R
+import org.lineageos.aperture.camera.CameraViewModel
 import org.lineageos.aperture.ext.*
 import org.lineageos.aperture.utils.Rotation
 
@@ -27,9 +31,14 @@ import org.lineageos.aperture.utils.Rotation
 class CountDownView(context: Context, attrs: AttributeSet?) : FrameLayout(
     context, attrs
 ) {
+    // Views
     private val remainingSecondsView by lazy {
         findViewById<TextView>(R.id.remainingSeconds)
     }
+
+    // System services
+    private val layoutInflater = context.getSystemService(LayoutInflater::class.java)
+
     private var remainingSeconds = 0
     private lateinit var listener: () -> Unit
     private val previewArea = Rect()
@@ -43,17 +52,31 @@ class CountDownView(context: Context, attrs: AttributeSet?) : FrameLayout(
         }
     }
 
+    private val screenRotationObserver = Observer { screenRotation: Rotation ->
+        updateViewsRotation(screenRotation)
+    }
+
     /**
      * Returns whether countdown is on-going.
      */
     private val isCountingDown: Boolean
         get() = remainingSeconds > 0
 
-    internal var screenRotation = Rotation.ROTATION_0
+    internal var cameraViewModel: CameraViewModel? = null
         set(value) {
+            // Unregister
+            field?.screenRotation?.removeObserver(screenRotationObserver)
+
             field = value
-            updateViewsRotation()
+
+            val lifecycleOwner = findViewTreeLifecycleOwner() ?: return
+
+            value?.screenRotation?.observe(lifecycleOwner, screenRotationObserver)
         }
+
+    init {
+        layoutInflater.inflate(R.layout.count_down_view, this)
+    }
 
     /**
      * Responds to preview area change by centering the countdown UI in the new
@@ -125,7 +148,7 @@ class CountDownView(context: Context, attrs: AttributeSet?) : FrameLayout(
         return false
     }
 
-    private fun updateViewsRotation() {
+    private fun updateViewsRotation(screenRotation: Rotation) {
         val compensationValue = screenRotation.compensationValue.toFloat()
 
         remainingSecondsView.smoothRotate(compensationValue)

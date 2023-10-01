@@ -9,17 +9,17 @@
     <string name="cancel_button_description">Batalkan</string>
     <string name="confirm_button_description">Konfirmasi</string>
     <string name="flash_button_description">Mode flash</string>
+    <string name="flip_camera_button_description">Balikkan kamera</string>
     <string name="gallery_button_description">Galeri</string>
+    <string name="google_lens_button_description">Buka Google Lens</string>
     <string name="image_view_description">Pratinjau gambar</string>
+    <string name="video_recording_state_button_description">Jeda/lanjutkan perekaman video</string>
     <string name="video_framerate_auto">FPS OTOMATIS</string>
     <string name="video_framerate_value"><xliff:g contoh="60" id="fps">%d</xliff:g> FPS</string>
     <string name="effect_none">TIDAK ADA</string>
     <string name="effect_night">MALAM</string>
     <string name="effect_auto">OTOMATIS</string>
     <string name="settings">PENGATURAN</string>
-    <string name="selector_photo">FOTO</string>
-    <string name="select_video">VIDEO</string>
-    <string name="select_scan">PINDAI</string>
     <string name="qr_copy_description">Salin ke papan klip</string>
     <string name="qr_icon_description">Ikon</string>
     <string name="qr_share_description">Bagikan</string>

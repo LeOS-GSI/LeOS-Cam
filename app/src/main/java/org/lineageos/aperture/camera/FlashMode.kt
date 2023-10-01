@@ -5,8 +5,6 @@
 
 package org.lineageos.aperture.camera
 
-import org.lineageos.aperture.ext.*
-
 enum class FlashMode {
     /**
      * Flash will not be fired.
@@ -34,8 +32,22 @@ enum class FlashMode {
      */
     TORCH;
 
-    /**
-     * Get the next mode.
-     */
-    fun next() = values().next(this)
+    companion object {
+        /**
+         * Allowed flash modes when in photo mode.
+         */
+        val PHOTO_ALLOWED_MODES = listOf(
+            OFF,
+            AUTO,
+            ON,
+        )
+
+        /**
+         * Allowed flash modes when in video mode.
+         */
+        val VIDEO_ALLOWED_MODES = listOf(
+            OFF,
+            TORCH,
+        )
+    }
 }
